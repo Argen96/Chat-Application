@@ -5,10 +5,12 @@
 export const up = function(knex) {
     return knex.schema.createTable('users', function(table) {
       table.increments('user_id').primary();
-      table.string('username').notNullable();
-      table.string('password_hash').notNullable();
+      table.string('first_name').notNullable();
+      table.string('password_hash').nullable();
       table.string('email').notNullable().unique();
-      table.string('full_name');
+      table.string('last_name').notNullable();
+      table.string('google_id').nullable();
+      table.string('email_token').nullable();
       table.timestamp('registration_date').defaultTo(knex.fn.now());
     });
   };
@@ -19,5 +21,5 @@ export const up = function(knex) {
    */
   export const down = function(knex) {
     return knex.schema.dropTableIfExists('users');
-  };
+};
   

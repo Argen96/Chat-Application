@@ -2,23 +2,23 @@ import { db } from "../../db.js";
 import ApiError from "../error/ApiError.js";
 import bcrypt from "bcrypt";;
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
-async function insertDataSignUp(request) {
+async function insertDataSignUp( request ) {
 try{
   const data = request.body
   const { email, password_hash } = data ;
+  const token = crypto.randomBytes(10).toString("hex");
   const hashPassword = await bcrypt.hash(password_hash, 10);
   const account = {
     ...data,
     password_hash: hashPassword,
+    email_token: token,
   };
-   await db("users").insert(account);
+  await db("users").insert(account);
   const result = await db("users")
-    .where({
-      email: email,
-      password_hash: hashPassword
-    })
-    .select("user_id", "username", "full_name", "email");
+  .where({ email: email })
+  .select("user_id", "first_name", "last_name", "email");
   return result;
 } catch(err){
     if (err.code === 'ER_DUP_ENTRY')  throw new ApiError("This email is already used!", 400);
@@ -44,4 +44,60 @@ async function verifyDataLogIn ( request ) {
     return user;
   }
 
-export { insertDataSignUp, verifyDataLogIn }
+  async function verifyEmailForgotPassword( email ) {
+    const user = await db("users")
+      .where({
+        email: email,
+      })
+      .first();
+    if (!user) throw new ApiError(`This email does not have an account with us!`, 401);
+    return user;
+  }
+
+  async function updatePassword(data) {
+    const { email_token, password } = data;
+    const user = await db("users")
+      .where({
+        email_token: email_token,
+      })
+      .first();
+    if (!user) throw new ApiError(`Invalid request!`, 404);
+    const hashPassword = await bcrypt.hash(password, 10);
+    await db("users")
+      .update({ password_hash: hashPassword })
+      .where({ email_token: email_token });
+    return "Password is updated successfully";
+  }
+  
+  async function insertDataSignUpGoogle(account) {
+    const { email, google_id } = account;
+    const usedEmail = await db("users")
+      .where({
+        email: email,
+      })
+      .select("email");
+    const previouslyRegistered = await db("users")
+      .where({
+        google_id: google_id,
+      })
+      .first();
+    let user_id = "";
+    if ( usedEmail.length != 0 || previouslyRegistered ) {
+      await db("users").update(account).where({ email: email }).orWhere({ google_id: google_id });
+      const accountId = await db("users").where({ email: email }).first();
+      user_id = accountId.id;
+    } else if (!previouslyRegistered) {
+      const token = crypto.randomBytes(10).toString("hex");
+      account.email_token = token;
+      [ user_id ] = await db("users").insert(account).select('id');
+    } 
+    const token = jwt.sign(
+      { email: email, userId: user_id },
+      process.env.TOKEN_KEY,
+      { expiresIn: "10d" }
+    );
+    return token;
+  }
+  
+
+export { insertDataSignUp, verifyDataLogIn, verifyEmailForgotPassword,  updatePassword, insertDataSignUpGoogle }
