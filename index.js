@@ -2,14 +2,12 @@ import express from 'express'
 import * as dotenv from 'dotenv';
 import passport from "passport";
 import session from "express-session";
+import cors from 'cors'
 import auth from "./src/middlewares/auth.js";
 import { signUp, logIn, forgotPassword, resetPassword, signInGoogle } from './src/controller/user.controller.js';
 import { signUpValidator, logInValidator, forgetPasswordValidator, resetPasswordValidator } from "./src/helpers/validation.user.js"
 import asyncHandler from './src/middlewares/asyncHandler.js';
 import { errorHandler } from './src/error/errorHandler.js';
-import http from 'http';
-import { Server as SocketServer } from 'socket.io'
-import { db } from './db.js';
 import "./src/configuration/oauth2.js";
 dotenv.config();
 
@@ -18,9 +16,15 @@ app.use(express.json())
 app.use(session({ secret: "cats" }));
 app.use(passport.initialize());
 app.use(passport.session());
-const server = http.createServer(app);
-const io = new SocketServer(server)
 app.use(express.static('public'));
+
+app.use(
+  cors({
+    origin: "http://localhost:3000", 
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true 
+   })
+);
 
 const port = process.env.PORT
 
@@ -60,12 +64,10 @@ app.post(
   })
 );
 
-app.get("/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
-
 app.get(
-  "/auth/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: "/auth/failure",
+  '/auth/google/callback',
+  passport.authenticate('google', {
+    failureRedirect: '/auth/failure',
   }),
   async (request, response) => {
     const token = await signInGoogle(request);
@@ -83,49 +85,12 @@ app.get(
 );
 
 
-// Store connected users
-const connectedUsers = new Map();
-
-io.on('connection', (socket) => {
-  // Handle authentication or user identification
-  socket.on('authenticate', (userId) => {
-    if (!userId) {
-      socket.disconnect(true);
-      return;
-    }
-
-    // Store the socket with the user ID
-    connectedUsers.set(userId, socket);
-    console.log(`User connected: ${userId}`);
-  });
-
-  socket.on('chatMessage', ({ senderId, recipientId, text }) => {
-    // Check if both sender and recipient are connected
-    if (!connectedUsers.has(senderId) || !connectedUsers.has(recipientId)) {
-      // Handle the case where one or both users are not connected
-      console.log('User not connected');
-      return;
-    }
-
-    // Get the sockets for the sender and recipient
-    const senderSocket = connectedUsers.get(senderId);
-    const recipientSocket = connectedUsers.get(recipientId);
-
-    // Emit the message to both sender and recipient
-    senderSocket.emit('chatMessage', { senderId, recipientId, text });
-    recipientSocket.emit('chatMessage', { senderId, recipientId, text });
-  });
-
-  socket.on('disconnect', () => {
-    // Handle user disconnection and remove from connectedUsers
-    for (const [userId, userSocket] of connectedUsers.entries()) {
-      if (userSocket === socket) {
-        connectedUsers.delete(userId);
-        console.log(`User disconnected: ${userId}`);
-        break;
-      }
-    }
-  });
+app.use((err, req, res, next) => {
+  if (err.name === 'CorsError') {
+    res.status(403).json({ error: 'CORS error' });
+  } else {
+    next(err);
+  }
 });
 
 app.use(errorHandler)

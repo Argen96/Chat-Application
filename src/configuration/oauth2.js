@@ -15,6 +15,7 @@ const fetchCalendarData = async () => {
             {
                 ...credentials,
                 passReqToCallback: true,
+                scope: ['email', 'profile']
             },
             async function (request, accessToken, refreshToken, profile, done) {
                 const data = {

@@ -62,6 +62,8 @@ async function verifyDataLogIn ( request ) {
       })
       .first();
     if (!user) throw new ApiError(`Invalid request!`, 404);
+    const isTheSamePssw = bcrypt.compareSync(password, user.password_hash);
+    if(isTheSamePssw ) throw new ApiError(`The new password cannot be the same as the previous password!`, 401);
     const hashPassword = await bcrypt.hash(password, 10);
     await db("users")
       .update({ password_hash: hashPassword })
