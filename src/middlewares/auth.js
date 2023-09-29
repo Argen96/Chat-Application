@@ -1,18 +1,19 @@
 import jwt from "jsonwebtoken";
 const config = process.env;
 import express from "express";
+import pkg from 'jsonwebtoken';
 
 const app = express();
 app.use(express.json());
 
-const { TokenExpiredError } = jwt
+const { TokenExpiredError } = pkg;
 
 const catchError = (err, res) => {
   if (err instanceof TokenExpiredError) {
     return res.status(401).json({ message: "Unauthorized! Access Token was expired!" });
   }
-    return res.status(401).json({ message: "Unauthorized!" });
-}
+  return res.status(401).json({ message: "Unauthorized!" });
+};
 
 const verifyToken = (req, res, next) => {
   const bearer = req.headers["authorization"]
@@ -24,6 +25,7 @@ const verifyToken = (req, res, next) => {
       .status(401)
       .json({ message: "A token is required for authentication" });
   }
+
   jwt.verify(token, config.TOKEN_KEY, (err, decoded) => {
     if (err) {
       return catchError(err, res);
@@ -31,6 +33,6 @@ const verifyToken = (req, res, next) => {
     req.user = decoded;
     return next();
   });
-}
-    
+};
+
 export default verifyToken;

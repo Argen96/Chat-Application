@@ -8,6 +8,7 @@ import { signUp, logIn, forgotPassword, resetPassword, signInGoogle } from './sr
 import { signUpValidator, logInValidator, forgetPasswordValidator, resetPasswordValidator } from "./src/helpers/validation.user.js"
 import asyncHandler from './src/middlewares/asyncHandler.js';
 import { errorHandler } from './src/error/errorHandler.js';
+import { landingPage } from './src/services/landingPage.js';
 import "./src/configuration/oauth2.js";
 dotenv.config();
 
@@ -69,10 +70,10 @@ app.get(
   passport.authenticate('google', {
     failureRedirect: '/auth/failure',
   }),
-  async (request, response) => {
+
+async (request, response) => {
     const token = await signInGoogle(request);
-    response.status(200);
-    response.json({ message: token });
+    response.redirect(`http://localhost:3000/welcome?token=${token}`)
   }
 );
 
@@ -84,14 +85,22 @@ app.get(
   })
 );
 
+app.get(
+  "http://localhost:3000/welcome",
+  asyncHandler(async (request, response) => {
+    response.status(200);
+    response.json({ message: "You are loggin successsfully" });
+  })
+);
 
-app.use((err, req, res, next) => {
-  if (err.name === 'CorsError') {
-    res.status(403).json({ error: 'CORS error' });
-  } else {
-    next(err);
-  }
-});
+app.get(
+  "/api/home", auth,
+  asyncHandler(async (request, response) => {
+    const res = await landingPage(request)
+    response.status(200);
+    response.json( res );
+  })
+);
 
 app.use(errorHandler)
 

@@ -87,11 +87,13 @@ async function verifyDataLogIn ( request ) {
     if ( usedEmail.length != 0 || previouslyRegistered ) {
       await db("users").update(account).where({ email: email }).orWhere({ google_id: google_id });
       const accountId = await db("users").where({ email: email }).first();
-      user_id = accountId.id;
+      console.log(accountId)
+      user_id = accountId.user_id;
+      
     } else if (!previouslyRegistered) {
       const token = crypto.randomBytes(10).toString("hex");
       account.email_token = token;
-      [ user_id ] = await db("users").insert(account).select('id');
+      [ user_id ] = await db("users").insert(account).select('user_id');
     } 
     const token = jwt.sign(
       { email: email, userId: user_id },
