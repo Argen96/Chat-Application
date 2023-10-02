@@ -39,7 +39,7 @@ async function verifyDataLogIn ( request ) {
       { email: email, userId: user.user_id, },
         process.env.TOKEN_KEY,
       { expiresIn: "10d" }
-    );
+    );  
     user.token = token;
     return user;
   }
@@ -102,6 +102,28 @@ async function verifyDataLogIn ( request ) {
     );
     return token;
   }
-  
 
-export { insertDataSignUp, verifyDataLogIn, verifyEmailForgotPassword,  updatePassword, insertDataSignUpGoogle }
+  async function allUsers(user_id) {
+    const user_data = await db("users")
+        .where({ user_id: user_id })
+        .select("user_id", "first_name", "last_name");
+    const random_users = await db("users").whereNot({ user_id: user_id })
+        .select("user_id", "first_name", "last_name");
+    return {
+        original_user: user_data,
+        other_users: random_users
+    }
+
+}
+
+async function selectiveUsers(first_name, last_name) {
+  let filters = db("users").select("*")
+  if(first_name && last_name)
+  filters = filters.where( "first_name", "like", `%${first_name}%`, "last_name", "like", `%${last_name}%`)
+  if(first_name && !last_name)
+  filters = filters.where( "first_name", "like", `%${first_name}%`, "last_name", "like", `%${first_name}%`)
+  filters = await filters
+  return filters
+}
+
+export { insertDataSignUp, verifyDataLogIn, verifyEmailForgotPassword,  updatePassword, insertDataSignUpGoogle, allUsers, selectiveUsers }

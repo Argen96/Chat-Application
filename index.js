@@ -8,8 +8,9 @@ import { signUp, logIn, forgotPassword, resetPassword, signInGoogle } from './sr
 import { signUpValidator, logInValidator, forgetPasswordValidator, resetPasswordValidator } from "./src/helpers/validation.user.js"
 import asyncHandler from './src/middlewares/asyncHandler.js';
 import { errorHandler } from './src/error/errorHandler.js';
-import { landingPage } from './src/services/landingPage.js';
+import { landingPage, searchUsers  } from './src/services/homePage.js';
 import "./src/configuration/oauth2.js";
+
 dotenv.config();
 
 const app = express()
@@ -97,6 +98,14 @@ app.get(
   "/api/home", auth,
   asyncHandler(async (request, response) => {
     const res = await landingPage(request)
+    response.status(200);
+    response.json( res );
+  })
+);
+app.get(
+  "/api/search-user", auth,
+  asyncHandler(async (request, response) => {
+    const res = await searchUsers(request)
     response.status(200);
     response.json( res );
   })
