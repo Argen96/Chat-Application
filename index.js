@@ -134,7 +134,6 @@ app.get(
 app.get(
   "/api/chat/messages/:senderId/:recipientId", auth,
   asyncHandler(async (request, response) => {
-    console.log(request.params)
     const messages = await showMessages (request)
     response.status(200);
     response.json(messages);
