@@ -9,6 +9,8 @@ import { signUpValidator, logInValidator, forgetPasswordValidator, resetPassword
 import asyncHandler from './src/middlewares/asyncHandler.js';
 import { errorHandler } from './src/error/errorHandler.js';
 import { landingPage, searchUsers  } from './src/services/homePage.js';
+import { sendMessage } from './src/services/messages.js';
+import { showMessages } from './src/services/messages.js'
 import "./src/configuration/oauth2.js";
 
 dotenv.config();
@@ -108,6 +110,34 @@ app.get(
     const res = await searchUsers(request)
     response.status(200);
     response.json( res );
+  })
+);
+
+app.post(
+  "/api/chat/send", auth,
+  asyncHandler(async (request, response) => {
+    const res = await sendMessage(request)
+    response.status(200);
+    response.json( {message:res} );
+  })
+);
+
+app.get(
+  "/api/user/current-user", auth,
+  asyncHandler(async (request, response) => {
+    const id = request.user.userId
+    response.status(200);
+    response.json({ user_id:id });
+  })
+);
+
+app.get(
+  "/api/chat/messages/:senderId/:recipientId", auth,
+  asyncHandler(async (request, response) => {
+    console.log(request.params)
+    const messages = await showMessages (request)
+    response.status(200);
+    response.json(messages);
   })
 );
 
