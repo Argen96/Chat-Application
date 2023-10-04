@@ -10,7 +10,7 @@ import asyncHandler from './src/middlewares/asyncHandler.js';
 import { errorHandler } from './src/error/errorHandler.js';
 import { landingPage, searchUsers  } from './src/services/homePage.js';
 import { sendMessage } from './src/services/messages.js';
-import { showMessages } from './src/services/messages.js'
+import { showMessageHistory, showAllMessages } from './src/services/messages.js'
 import "./src/configuration/oauth2.js";
 
 dotenv.config();
@@ -134,7 +134,16 @@ app.get(
 app.get(
   "/api/chat/messages/:senderId/:recipientId", auth,
   asyncHandler(async (request, response) => {
-    const messages = await showMessages (request)
+    const messages = await showMessageHistory (request)
+    response.status(200);
+    response.json(messages);
+  })
+);
+
+app.get(
+  "/api/chat-history", auth,
+  asyncHandler(async (request, response) => {
+    const messages = await showAllMessages(request)
     response.status(200);
     response.json(messages);
   })

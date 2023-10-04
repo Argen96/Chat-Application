@@ -1,4 +1,4 @@
-import { saveMessagesInDb, getMessagesFromDb } from "../resposositories/message.table.js"
+import { saveMessagesInDb, getMessageHistoryFromDb, getMessagesFromDb } from "../resposositories/message.table.js"
 
 async function sendMessage(request) {
     const { text, recipient_id } = request.body
@@ -12,10 +12,16 @@ async function sendMessage(request) {
     return response
 }
 
-async function showMessages (request) {
+async function showMessageHistory (request) {
   const { senderId, recipientId } = request.params;
-  const messages = await getMessagesFromDb(senderId, recipientId)
+  const messages = await getMessageHistoryFromDb(senderId, recipientId)
   return messages     
 }
 
-export { sendMessage,  showMessages }
+async function showAllMessages(request){
+    const user_id = request.user.userId
+    const messages = await getMessagesFromDb(user_id)
+    return messages
+}
+
+export { sendMessage,  showMessageHistory, showAllMessages}
