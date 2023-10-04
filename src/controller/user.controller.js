@@ -3,49 +3,49 @@ import ApiError from "../error/ApiError.js";
 import { insertDataSignUp, verifyDataLogIn, verifyEmailForgotPassword, updatePassword, insertDataSignUpGoogle } from '../resposositories/users.table.js';
 import { sendEmail } from '../services/mail.js';
 
-async function signUp (request){
-    const error = validationResult(request)
-    console.log(error)
-    if (!error.isEmpty()) {
-      error.array().forEach(err => {
-      throw new ApiError(err.msg, 400)
-      })
-     }
-     const result = await insertDataSignUp(request);
-     return result;
-}
-
-async function logIn ( request ){
-    const error = validationResult(request)
-    if (!error.isEmpty()) {
-      error.array().forEach(err => {
-      throw new ApiError(err.msg, 400)
-      })
-     }
-     const result = await verifyDataLogIn(request);
-     return result;
-}
-
-async function forgotPassword( request ) {
+async function signUp(request) {
   const error = validationResult(request)
-   if (!error.isEmpty()) {
-     error.array().forEach(err => {
+  console.log(error)
+  if (!error.isEmpty()) {
+    error.array().forEach(err => {
       throw new ApiError(err.msg, 400)
-     })
-   }
-   const { email } = request.body;
-   const account = await verifyEmailForgotPassword(email);
-   if (account)  await sendEmail(account);
-   return "Please Check your email to update the password";
- }
+    })
+  }
+  const result = await insertDataSignUp(request);
+  return result;
+}
 
- async function resetPassword( request ) {
+async function logIn(request) {
   const error = validationResult(request)
   if (!error.isEmpty()) {
     error.array().forEach(err => {
-    throw new ApiError(err.msg, 400)
+      throw new ApiError(err.msg, 400)
     })
-   }
+  }
+  const result = await verifyDataLogIn(request);
+  return result;
+}
+
+async function forgotPassword(request) {
+  const error = validationResult(request)
+  if (!error.isEmpty()) {
+    error.array().forEach(err => {
+      throw new ApiError(err.msg, 400)
+    })
+  }
+  const { email } = request.body;
+  const account = await verifyEmailForgotPassword(email);
+  if (account) await sendEmail(account);
+  return "Please Check your email to update the password";
+}
+
+async function resetPassword(request) {
+  const error = validationResult(request)
+  if (!error.isEmpty()) {
+    error.array().forEach(err => {
+      throw new ApiError(err.msg, 400)
+    })
+  }
   const { code } = request.query;
   const { password } = request.body
   const data = { email_token: code, password: password };
@@ -66,4 +66,3 @@ async function signInGoogle(request) {
 }
 
 export { signUp, logIn, forgotPassword, resetPassword, signInGoogle }
-  

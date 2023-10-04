@@ -29,9 +29,9 @@ const fetchCalendarData = async () => {
 
 const initializePassport = async () => {
     await fetchCalendarData();
-  };
-  
-  initializePassport();
+};
+
+initializePassport();
 
 passport.serializeUser(function (user, done) {
     done(null, user);
