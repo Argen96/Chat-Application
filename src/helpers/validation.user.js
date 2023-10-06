@@ -15,7 +15,6 @@ const signUpValidator = [
     })
 ];
 
-
 const logInValidator = [
   check('email').isEmail().withMessage('Email Address is required'),
   check('password').notEmpty().withMessage('Password is required')
