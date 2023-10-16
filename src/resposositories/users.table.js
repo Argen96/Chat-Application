@@ -84,13 +84,24 @@ async function insertDataSignUpGoogle(account) {
     })
     .first();
   let user_id = "";
-  if (usedEmail.length != 0 || previouslyRegistered) {
+  if (usedEmail != 0) {
+    await db("users")
+      .update({
+        first_name: account.first_name,
+        last_name: account.last_name,
+        google_id: account.google_id,
+      })
+      .where({ email: email });
+    const accountId = await db("users").where({ email: email }).first();
+    user_id = accountId.user_id;
+  }
+  else if (previouslyRegistered) {
     await db("users").update(account).where({ email: email }).orWhere({ google_id: google_id });
     const accountId = await db("users").where({ email: email }).first();
-    console.log(accountId)
     user_id = accountId.user_id;
 
-  } else if (!previouslyRegistered) {
+  }
+  else if (!previouslyRegistered) {
     const token = crypto.randomBytes(10).toString("hex");
     account.email_token = token;
     [user_id] = await db("users").insert(account).select('user_id');
